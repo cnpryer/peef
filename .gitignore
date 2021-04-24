@@ -16,3 +16,6 @@
 
 # environment config
 .env
+
+# Default log file
+peef-bot.log

@@ -20,8 +20,20 @@ var (
 					Description: "Ask for ticker",
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
+							Name:  "VT",
+							Value: "vt",
+						},
+						{
 							Name:  "VTSAX",
 							Value: "vtsax",
+						},
+						{
+							Name:  "VTI",
+							Value: "vti",
+						},
+						{
+							Name:  "VOO",
+							Value: "voo",
 						},
 					},
 					Required: true,

@@ -9,7 +9,7 @@ import (
 var (
 	Commands = []*discordgo.ApplicationCommand{
 		{
-			Name:        "peef",
+			Name:        "stocks",
 			Description: "peef discord bot",
 			Options: []*discordgo.ApplicationCommandOption{
 
@@ -17,30 +17,14 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "ticker",
-					Description: "Ask for ticker checkup",
-					Choices:     getPeefTickers(),
-					Required:    false,
-				},
-
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "chat",
-					Description: "Chat with peef",
-					Choices:     getPeefChatOptions(),
-					Required:    false,
-				},
-
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "message",
-					Description: "Test message to send to peef",
+					Description: "Ask for ticker",
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
-							Name:  "test",
-							Value: 1,
+							Name:  "VTSAX",
+							Value: ":rocket:",
 						},
 					},
-					Required: false,
+					Required: true,
 				},
 			},
 		},
@@ -57,18 +41,6 @@ var (
 							Name:  "Acknowledge",
 							Value: 2,
 						},
-						{
-							Name:  "Channel message",
-							Value: 3,
-						},
-						{
-							Name:  "Channel message with source",
-							Value: 4,
-						},
-						{
-							Name:  "Acknowledge with source",
-							Value: 5,
-						},
 					},
 					Required: true,
 				},
@@ -77,24 +49,12 @@ var (
 	}
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"chat": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"stocks": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			margs := []interface{}{
 				i.Data.Options[0].StringValue(),
-				i.Data.Options[1].StringValue(),
-				i.Data.Options[2].IntValue(),
 			}
 
 			msgformat := ` > test: %s `
-
-			if len(i.Data.Options) >= 2 {
-				msgformat += "\n> content: %d"
-			}
-
-			if len(i.Data.Options) >= 3 {
-				msgformat += "\n> content: %d"
-			}
-
-			msgformat += "\n" + msgformat
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				// Ignore type for now, we'll discuss them in "responses" part
@@ -119,27 +79,3 @@ var (
 		},
 	}
 )
-
-func getPeefTickers() []*discordgo.ApplicationCommandOptionChoice {
-
-	// TODO TODO TODO TODO TODO TODO TODO !?!!?@!?!?@?!@?!@ pls no
-	return []*discordgo.ApplicationCommandOptionChoice{
-		{
-			Name:  "VTSAX",
-			Value: "moon",
-		},
-	}
-
-}
-
-func getPeefChatOptions() []*discordgo.ApplicationCommandOptionChoice {
-
-	// TODO TODO TODO TODO TODO TODO TODO !?!!?@!?!?@?!@?!@ pls no
-	return []*discordgo.ApplicationCommandOptionChoice{
-		{
-			Name:  "invest",
-			Value: "VT compensated risk",
-		},
-	}
-
-}

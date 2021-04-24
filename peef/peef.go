@@ -21,7 +21,7 @@ var (
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
 							Name:  "VTSAX",
-							Value: ":rocket:",
+							Value: "vtsax",
 						},
 					},
 					Required: true,
@@ -54,7 +54,7 @@ var (
 				i.Data.Options[0].StringValue(),
 			}
 
-			msgformat := ` > test: %s `
+			msgformat := `%s: :rocket:`
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				// Ignore type for now, we'll discuss them in "responses" part

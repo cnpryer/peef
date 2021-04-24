@@ -8,3 +8,5 @@ This project is under development.
 
 - Stock ticker queries
 - Peef conversation
+  - No, that's uncompensated risk
+  - You should really invest in VT

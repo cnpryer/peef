@@ -1,6 +1,6 @@
 # peef
 
-A discord bot for the [FIRE discord guild](https://discord.gg/KGHue6zHNR).
+A discord bot for the [FIRE discord guild](https://discord.gg/SYE2JCzsES).
 
 This project is under development.
 

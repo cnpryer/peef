@@ -10,3 +10,5 @@ This project is under development.
 - Peef conversation
   - No, that's uncompensated risk
   - You should really invest in VT
+
+[Data provided by Financial Modeling Prep](https://financialmodelingprep.com/developer/docs/)

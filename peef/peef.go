@@ -2,6 +2,9 @@ package peef
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -91,3 +94,22 @@ var (
 		},
 	}
 )
+
+func getTickerCurrentPrice(ticker string, key string) {
+	url := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s?apikey=%s", ticker, key)
+	response, err := http.Get(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	responseString := string(responseData)
+
+	fmt.Println(responseString)
+}

@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
+	log "github.com/sirupsen/logrus"
 )
 
 type Price struct {
@@ -74,7 +74,15 @@ var (
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"stocks": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			symbol := i.Data.Options[0].StringValue()
-			msg := fmt.Sprintf(`%s: $%f`, symbol, getSymbolCurrentPrice(symbol, os.Getenv("API_KEY")))
+			key := os.Getenv("API_KEY")
+
+			if key == "" {
+				log.Fatalf("API_KEY not found")
+			}
+
+			url := buildPriceUrl(symbol, key)
+			data := getSymbolCurrentPriceData(url)
+			msg := fmt.Sprintf(`%s: $%f`, symbol, data.Price)
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				// Ignore type for now, we'll discuss them in "responses" part
@@ -97,11 +105,8 @@ var (
 	}
 )
 
-func getSymbolCurrentPrice(symbol string, key string) float32 {
+func getSymbolCurrentPriceData(url string) Price {
 	var prices []Price
-
-	url := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s?apikey=%s", symbol, key)
-	fmt.Println(url)
 
 	response, err := http.Get(url)
 
@@ -122,7 +127,25 @@ func getSymbolCurrentPrice(symbol string, key string) float32 {
 		log.Fatal(err)
 	}
 
-	fmt.Println(prices)
+	return prices[0]
+}
 
-	return prices[0].Price
+func buildPriceUrl(symbol string, key string) string {
+	// TODO: see if base can be set using NewRequest
+
+	baseUrl := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s", symbol)
+	request, err := http.NewRequest("GET", baseUrl, nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	query := request.URL.Query()
+	query.Add("apikey", key)
+	request.URL.RawQuery = query.Encode()
+
+	url := request.URL.String()
+	log.Info(url)
+
+	return url
 }

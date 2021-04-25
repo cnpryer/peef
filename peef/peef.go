@@ -1,13 +1,21 @@
 package peef
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+type Price struct {
+	Symbol string  `json:"symbol"`
+	Price  float32 `json:"price"`
+	Volume int32   `json:"volume"`
+}
 
 var (
 	Commands = []*discordgo.ApplicationCommand{
@@ -16,27 +24,27 @@ var (
 			Description: "peef discord bot",
 			Options: []*discordgo.ApplicationCommandOption{
 
-				// TODO: group passes as a command type
+				// TODO: open up for non-choice method with unlimited API
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "ticker",
-					Description: "Ask for ticker",
+					Name:        "symbol",
+					Description: "Stock ticker symbol",
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
 							Name:  "VT",
-							Value: "vt",
+							Value: "VT",
 						},
 						{
 							Name:  "VTSAX",
-							Value: "vtsax",
+							Value: "VTSAX",
 						},
 						{
 							Name:  "VTI",
-							Value: "vti",
+							Value: "VTI",
 						},
 						{
 							Name:  "VOO",
-							Value: "voo",
+							Value: "VOO",
 						},
 					},
 					Required: true,
@@ -65,20 +73,14 @@ var (
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"stocks": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			margs := []interface{}{
-				i.Data.Options[0].StringValue(),
-			}
-
-			msgformat := `%s: :rocket:`
+			symbol := i.Data.Options[0].StringValue()
+			msg := fmt.Sprintf(`%s: $%f`, symbol, getSymbolCurrentPrice(symbol, os.Getenv("API_KEY")))
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				// Ignore type for now, we'll discuss them in "responses" part
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionApplicationCommandResponseData{
-					Content: fmt.Sprintf(
-						msgformat,
-						margs...,
-					),
+					Content: msg,
 				},
 			})
 		},
@@ -95,8 +97,12 @@ var (
 	}
 )
 
-func getTickerCurrentPrice(ticker string, key string) {
-	url := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s?apikey=%s", ticker, key)
+func getSymbolCurrentPrice(symbol string, key string) float32 {
+	var prices []Price
+
+	url := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s?apikey=%s", symbol, key)
+	fmt.Println(url)
+
 	response, err := http.Get(url)
 
 	if err != nil {
@@ -105,11 +111,18 @@ func getTickerCurrentPrice(ticker string, key string) {
 	defer response.Body.Close()
 
 	responseData, err := ioutil.ReadAll(response.Body)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	responseString := string(responseData)
+	err = json.Unmarshal(responseData, &prices)
 
-	fmt.Println(responseString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(prices)
+
+	return prices[0].Price
 }

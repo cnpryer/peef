@@ -19,3 +19,6 @@
 
 # Default log file
 peef-bot.log
+
+# vscode go debug
+__debug_bin

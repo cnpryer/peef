@@ -1,10 +1,24 @@
 package peef
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
+
+type Price struct {
+	Symbol string  `json:"symbol"`
+	Price  float32 `json:"price"`
+	Volume int32   `json:"volume"`
+}
+
+var Log = logrus.New()
 
 var (
 	Commands = []*discordgo.ApplicationCommand{
@@ -13,27 +27,27 @@ var (
 			Description: "peef discord bot",
 			Options: []*discordgo.ApplicationCommandOption{
 
-				// TODO: group passes as a command type
+				// TODO: open up for non-choice method with unlimited API
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "ticker",
-					Description: "Ask for ticker",
+					Name:        "symbol",
+					Description: "Stock ticker symbol",
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
 							Name:  "VT",
-							Value: "vt",
+							Value: "VT",
 						},
 						{
 							Name:  "VTSAX",
-							Value: "vtsax",
+							Value: "VTSAX",
 						},
 						{
 							Name:  "VTI",
-							Value: "vti",
+							Value: "VTI",
 						},
 						{
 							Name:  "VOO",
-							Value: "voo",
+							Value: "VOO",
 						},
 					},
 					Required: true,
@@ -62,20 +76,22 @@ var (
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"stocks": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			margs := []interface{}{
-				i.Data.Options[0].StringValue(),
+			symbol := i.Data.Options[0].StringValue()
+			key := os.Getenv("API_KEY")
+
+			if key == "" {
+				Log.Fatalf("API_KEY not found")
 			}
 
-			msgformat := `%s: :rocket:`
+			url := buildPriceUrl(symbol, key)
+			data := getSymbolCurrentPriceData(url)
+			msg := fmt.Sprintf(`%s: $%f`, symbol, data.Price)
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				// Ignore type for now, we'll discuss them in "responses" part
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionApplicationCommandResponseData{
-					Content: fmt.Sprintf(
-						msgformat,
-						margs...,
-					),
+					Content: msg,
 				},
 			})
 		},
@@ -91,3 +107,46 @@ var (
 		},
 	}
 )
+
+func getSymbolCurrentPriceData(url string) Price {
+	var prices []Price
+
+	response, err := http.Get(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		Log.Fatal(err)
+	}
+
+	err = json.Unmarshal(responseData, &prices)
+
+	if err != nil {
+		Log.Fatal(err)
+	}
+
+	return prices[0]
+}
+
+func buildPriceUrl(symbol string, key string) string {
+	baseUrl := "https://financialmodelingprep.com/api/v3/quote-short/" + symbol
+	request, err := http.NewRequest("GET", baseUrl, nil)
+
+	if err != nil {
+		Log.Fatal(err)
+	}
+
+	query := request.URL.Query()
+	query.Add("apikey", key)
+	request.URL.RawQuery = query.Encode()
+
+	url := request.URL.String()
+	Log.Info(url)
+
+	return url
+}

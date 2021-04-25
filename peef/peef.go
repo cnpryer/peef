@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/sirupsen/logrus"
 )
 
 type Price struct {
@@ -17,8 +15,6 @@ type Price struct {
 	Price  float32 `json:"price"`
 	Volume int32   `json:"volume"`
 }
-
-var Log = logrus.New()
 
 var (
 	Commands = []*discordgo.ApplicationCommand{
@@ -55,17 +51,17 @@ var (
 			},
 		},
 		{
-			Name:        "responses",
-			Description: "Interaction responses",
+			Name:        "tests",
+			Description: "peef command for testing",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "resp-type",
-					Description: "Response type",
-					Type:        discordgo.ApplicationCommandOptionInteger,
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "arg",
+					Description: "test arg",
 					Choices: []*discordgo.ApplicationCommandOptionChoice{
 						{
-							Name:  "Acknowledge",
-							Value: 2,
+							Name:  "TEST",
+							Value: ":white_check_mark:",
 						},
 					},
 					Required: true,
@@ -88,22 +84,21 @@ var (
 			msg := fmt.Sprintf(`%s: $%f`, symbol, data.Price)
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				// Ignore type for now, we'll discuss them in "responses" part
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionApplicationCommandResponseData{
 					Content: msg,
 				},
 			})
 		},
-		"responses": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseType(i.Data.Options[0].IntValue()),
+		"tests": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			msg := fmt.Sprintf(`test: %s`, i.Data.Options[0].StringValue())
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionApplicationCommandResponseData{
+					Content: msg,
+				},
 			})
-			if err != nil {
-				s.FollowupMessageCreate(s.State.User.ID, i.Interaction, true, &discordgo.WebhookParams{
-					Content: "Something gone wrong",
-				})
-			}
 		},
 	}
 )
@@ -114,7 +109,7 @@ func getSymbolCurrentPriceData(url string) Price {
 	response, err := http.Get(url)
 
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 	defer response.Body.Close()
 

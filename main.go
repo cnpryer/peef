@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
@@ -15,6 +14,7 @@ import (
 var (
 	GuildID        = flag.String("guild", "", "Test guild ID. If not passed - bot registers commands globally")
 	BotToken       = flag.String("token", "", "Bot access token")
+	APIKey         = flag.String("api-key", "", "FMP API Key for financial data")
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 	Debug          = flag.Bool("debug", false, "Run in debug mode")
 	LogFile        = flag.String("logfile", "peef-bot.log", "Log file name")
@@ -23,8 +23,9 @@ var (
 var session *discordgo.Session
 
 func init() {
-	godotenv.Load()
 	flag.Parse()
+
+	config := peef.InitConfig(GuildID, BotToken, APIKey)
 
 	// Setup loggers
 	logFile, err := os.OpenFile(*LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -40,7 +41,7 @@ func init() {
 		peef.Log.Level = logrus.InfoLevel
 	}
 
-	session, err = discordgo.New("Bot " + *BotToken)
+	session, err = discordgo.New("Bot " + config.BotToken)
 	if err != nil {
 		peef.Log.Fatalf("Invalid bot parameters: %v", err)
 	}
@@ -53,6 +54,10 @@ func init() {
 }
 
 func main() {
+
+	// TODO: there's probably a better way to set config
+	config := peef.InitConfig(GuildID, BotToken, APIKey)
+
 	session.AddHandler(
 		func(s *discordgo.Session, r *discordgo.Ready) {
 			peef.Log.Info("Bot is up!")
@@ -66,7 +71,7 @@ func main() {
 
 	for _, v := range peef.Commands {
 
-		_, err := session.ApplicationCommandCreate(session.State.User.ID, *GuildID, v)
+		_, err := session.ApplicationCommandCreate(session.State.User.ID, config.GuildID, v)
 
 		if err != nil {
 			peef.Log.Panicf("Cannot create '%v' command: %v", v.Name, err)

@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type Price struct {
@@ -16,6 +17,8 @@ type Price struct {
 	Price  float32 `json:"price"`
 	Volume int32   `json:"volume"`
 }
+
+var Log = logrus.New()
 
 var (
 	Commands = []*discordgo.ApplicationCommand{
@@ -77,7 +80,7 @@ var (
 			key := os.Getenv("API_KEY")
 
 			if key == "" {
-				log.Fatalf("API_KEY not found")
+				Log.Fatalf("API_KEY not found")
 			}
 
 			url := buildPriceUrl(symbol, key)
@@ -118,26 +121,24 @@ func getSymbolCurrentPriceData(url string) Price {
 	responseData, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 
 	err = json.Unmarshal(responseData, &prices)
 
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 
 	return prices[0]
 }
 
 func buildPriceUrl(symbol string, key string) string {
-	// TODO: see if base can be set using NewRequest
-
-	baseUrl := fmt.Sprintf("https://financialmodelingprep.com/api/v3/quote-short/%s", symbol)
+	baseUrl := "https://financialmodelingprep.com/api/v3/quote-short/" + symbol
 	request, err := http.NewRequest("GET", baseUrl, nil)
 
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 
 	query := request.URL.Query()
@@ -145,7 +146,7 @@ func buildPriceUrl(symbol string, key string) string {
 	request.URL.RawQuery = query.Encode()
 
 	url := request.URL.String()
-	log.Info(url)
+	Log.Info(url)
 
 	return url
 }

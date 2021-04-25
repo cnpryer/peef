@@ -20,11 +20,9 @@ var (
 	LogFile        = flag.String("logfile", "peef-bot.log", "Log file name")
 )
 
-var s *discordgo.Session
-var log *logrus.Logger
+var session *discordgo.Session
 
 func init() {
-	log = logrus.New()
 	godotenv.Load()
 	flag.Parse()
 
@@ -32,22 +30,22 @@ func init() {
 	logFile, err := os.OpenFile(*LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
 	if err != nil {
-		log.Fatal(err)
+		peef.Log.Fatal(err)
 	}
-	log.Out = logFile
+	peef.Log.Out = logFile
 
 	if *Debug {
-		log.Level = logrus.DebugLevel
+		peef.Log.Level = logrus.DebugLevel
 	} else {
-		log.Level = logrus.InfoLevel
+		peef.Log.Level = logrus.InfoLevel
 	}
 
-	s, err = discordgo.New("Bot " + *BotToken)
+	session, err = discordgo.New("Bot " + *BotToken)
 	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
+		peef.Log.Fatalf("Invalid bot parameters: %v", err)
 	}
 
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := peef.CommandHandlers[i.Data.Name]; ok {
 			h(s, i)
 		}
@@ -55,30 +53,30 @@ func init() {
 }
 
 func main() {
-	s.AddHandler(
+	session.AddHandler(
 		func(s *discordgo.Session, r *discordgo.Ready) {
-			log.Info("Bot is up!")
+			peef.Log.Info("Bot is up!")
 		},
 	)
 
-	err := s.Open()
+	err := session.Open()
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		peef.Log.Fatalf("Cannot open the session: %v", err)
 	}
 
 	for _, v := range peef.Commands {
 
-		_, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v)
+		_, err := session.ApplicationCommandCreate(session.State.User.ID, *GuildID, v)
 
 		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+			peef.Log.Panicf("Cannot create '%v' command: %v", v.Name, err)
 		}
 	}
 
-	defer s.Close()
+	defer session.Close()
 
 	stop := make(chan os.Signal)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
-	log.Info("Gracefully shutting down")
+	peef.Log.Info("Gracefully shutting down")
 }

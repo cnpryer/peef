@@ -18,7 +18,6 @@ var (
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 	Debug          = flag.Bool("debug", false, "Run in debug mode")
 	LogFile        = flag.String("logfile", "peef-bot.log", "Log file name")
-	APIKey         = flag.String("key", "", "API Key")
 )
 
 var s *discordgo.Session
@@ -30,12 +29,12 @@ func init() {
 	flag.Parse()
 
 	// Setup loggers
-	log_file, err := os.OpenFile(*LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	logFile, err := os.OpenFile(*LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Out = log_file
+	log.Out = logFile
 
 	if *Debug {
 		log.Level = logrus.DebugLevel

@@ -17,6 +17,16 @@ Go v1.16
  - Run with argument `-debug` to set the log level to debug
  - Run with argument `-guild <your-discord-server-id>` to limit the bot commands to a specific discord guild. 
 
+## Using a envFile
+
+Create a `.env` file at the root of the project and add the following:
+
+```envFile
+GUILD_ID=your guild ID
+BOT_TOKEN=your bot's token
+API_KEY=your FMP API key
+```
+
 ## Planned Features
 
 - `/stock symbol: [symbol]` for current prices
